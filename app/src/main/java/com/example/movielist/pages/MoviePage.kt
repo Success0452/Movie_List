@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.*
@@ -42,446 +43,237 @@ import androidx.paging.compose.items
 import com.example.movielist.R
 import com.example.movielist.models.Results
 import com.example.movielist.pages.Header
+import com.example.movielist.pages.LocalMovieCard
+import com.example.movielist.pages.MovieCard
 import com.example.movielist.room.models.Movie
 import com.example.movielist.viewmodel.MovieViewModel
 
+// enum class to track touch state for an animated
 enum class TouchState{
     Touched, NotTouched
 }
 
+// movie list composable function that houses the widget to draw the ui for listing the movie List in the database
 @Composable
 fun MovieList(navController: NavController, movieViewModel: MovieViewModel)
 {
+    // local context to execute context based functions
     val myContext = LocalContext.current
+
+    // retrieving list of movies from the roomdatabse in the viewmodel
     val localMovieList = movieViewModel.roomdb.collectAsState(initial = emptyList()).value
 
-    val lc = LocalContext.current
-    val connectivityManager = lc.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    // checks for internet connectivity status
+    val connectivityManager = myContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     val activeNetworkInfo = connectivityManager.activeNetworkInfo
 
+    // retrieving list of movies from the pager in the viewmodel
     val pager = movieViewModel.pager.collectAsLazyPagingItems()
-    Scaffold(backgroundColor = Color.LightGray)
-    {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (activeNetworkInfo != null && activeNetworkInfo.isConnected){
-                LazyColumn(content = {
-                    item {
-                        Header()
-                    }
-                    items(pager){value ->
+    // scaffold widget to handle other widget for easy arrangment
+    Scaffold(
+        backgroundColor = Color.LightGray,
+        content = {
+            // column widget that list items in a vertical manner
+            Column(
+                // modifier that gives attribute to the specified widget
+                Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                // align the vertical arrangement from the top
+                verticalArrangement = Arrangement.Top,
+                // align the horizontal arrangement from the center
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // if statement to check for the activeness of the network connection
+                if (activeNetworkInfo != null && activeNetworkInfo.isConnected){
+                    // lazyColumn widget that loads item in a lazy manner
+                    LazyColumn(content = {
+                        item {
+                            Header(pager)
+                        }
+                        // items that accepts list of the items you want to lazyly display
+                        items(pager){value ->
+                            // this widget gets repeated in how many times of the item specified
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                MovieCard(value!!)
+                                movieViewModel.saveMovie(value)
+                            }
+                        }
+                        // tracking of pager progress to display a loading progress at each stage
+                        pager.apply {
+                            when {
+                                // at refresh stage the circularProgressIndicator appears
+                                loadState.refresh is LoadState.Loading -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(16.dp)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .align(
+                                                        Alignment.Center
+                                                    ),
+                                                color = Color.Red,
+                                                strokeWidth = 5.dp
+                                            )
+                                        }
+                                    }
+                                }
+                                // at append stage the circularProgressIndicator appears
+                                loadState.append is LoadState.Loading -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .align(
+                                                        Alignment.Center
+                                                    ),
+                                                color = Color.Red,
+                                                strokeWidth = 5.dp
+                                            )
+                                        }
+                                    }
+                                }
+                                // at prepend stage the circularProgressIndicator appears
+                                loadState.prepend is LoadState.Loading -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .align(
+                                                        Alignment.Center
+                                                    ),
+                                                color = Color.Red,
+                                                strokeWidth = 5.dp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    })
+                }else{
+                    // gets items from the roomdatabase and not the network directly
+                    if (localMovieList.isEmpty()){
                         Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            verticalArrangement = Arrangement.Top,
+                            Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            MovieCard(value!!)
-                            movieViewModel.saveMovie(value)
+                            Text("Connect to your Internet")
                         }
                     }
-                    pager.apply {
-                        when {
-                            loadState.refresh is LoadState.Loading -> {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(16.dp)
-                                    ) {
-                                        CircularProgressIndicator(
+                    // lazyColumn widget that loads item in a lazy manner
+                    LazyColumn(content = {
+                        item {
+                            Header(pager)
+                        }
+                        // tracking of pager progress to display a loading progress at each stage
+                        pager.apply {
+                            when {
+                                // at refresh stage the circularProgressIndicator appears
+                                loadState.refresh is LoadState.Loading -> {
+                                    item {
+                                        Box(
                                             modifier = Modifier
-                                                .padding(12.dp)
-                                                .align(
-                                                    Alignment.Center
-                                                )
-                                        )
+                                                .fillMaxSize()
+                                                .padding(16.dp)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .align(
+                                                        Alignment.Center
+                                                    ),
+                                                color = Color.Red,
+                                                strokeWidth = 5.dp
+                                            )
+                                        }
+                                    }
+                                }
+                                // at append stage the circularProgressIndicator appears
+                                loadState.append is LoadState.Loading -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .align(
+                                                        Alignment.Center
+                                                    ),
+                                                color = Color.Red,
+                                                strokeWidth = 5.dp
+                                            )
+                                        }
+                                    }
+                                }
+                                // at prepend stage the circularProgressIndicator appears
+                                loadState.prepend is LoadState.Loading -> {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        ) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier
+                                                    .padding(12.dp)
+                                                    .align(
+                                                        Alignment.Center
+                                                    ),
+                                                color = Color.Red,
+                                                strokeWidth = 5.dp
+                                            )
+                                        }
                                     }
                                 }
                             }
-
-                            loadState.append is LoadState.Loading -> {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier
-                                                .padding(12.dp)
-                                                .align(
-                                                    Alignment.Center
-                                                )
-                                        )
-                                    }
-                                }
-                            }
-                            loadState.prepend is LoadState.Loading -> {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier
-                                                .padding(12.dp)
-                                                .align(
-                                                    Alignment.Center
-                                                )
-                                        )
-                                    }
-                                }
+                        }
+                        // items that accepts list of the items you want to lazyly display
+                        items(localMovieList){value ->
+                            Column(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                LocalMovieCard(value)
                             }
                         }
-                    }
-
-                })
-            }else{
-                Text("You are viewing this page offline")
-                if (localMovieList.isEmpty()){
-                    Column(
-                        Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text("Connect to your Internet")
-                    }
+                    })
                 }
-                LazyColumn(content = {
-                    item {
-                        Header()
-                    }
-                    items(localMovieList){value ->
-                        Column(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            verticalArrangement = Arrangement.Top,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            LocalMovieCard(value)
-                        }
-                    }
 
-                })
             }
-
-        }
-    }
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun MovieCard(movie: Results){
-    var currentState: TouchState by remember{ mutableStateOf(TouchState.NotTouched)}
-
-    var transition = updateTransition(targetState = currentState, label = "animation")
-
-    val scale: Float by transition.animateFloat(
-        transitionSpec = { spring(stiffness = 900f)}, label = ""
-    ) {state ->
-        if (state == TouchState.Touched){
-            1.3f
-        }else{
-            1f
-        }
-    }
-
-    val colorAlpha: Float by transition.animateFloat(
-        transitionSpec = { spring(stiffness = 900f)}, label = ""
-    ) {state ->
-        if (state == TouchState.Touched){
-            1f
-        }else{
-            0.2f
-        }
-    }
-    
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(270.dp),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Card(
-            Modifier
-                .fillMaxWidth()
-                .height(270.dp)
-                .pointerInteropFilter {
-                    currentState = when (it.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            TouchState.Touched
-                        }
-                        else -> {
-                            TouchState.NotTouched
-                        }
-                    }
-                    true
-                },
-            shape = RoundedCornerShape(topStart = 16.dp, bottomEnd = 16.dp, topEnd = 5.dp, bottomStart = 5.dp),
-            backgroundColor = Color.Red,
-            elevation = 6.dp
-        ) {
-            Row(modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.Red.copy(0.2f),
-                            Color.Red.copy(0.2f),
-                            Color.Red.copy(colorAlpha)
-                        )
-                    )
-                )) {
-
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Id: ${movie.id}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Movie Name: ${movie.name}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "List Type: ${movie.list_type}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Language: ${movie.iso_639_1}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Favourite Count: ${movie.favorite_count.toString()}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-
-                    Text(
-                        text = "Item Count: ${movie.item_count.toString()}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Description: \n${movie.description}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                }
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { pager.refresh() }, backgroundColor = Color.Red) {
+                Icon(imageVector = Icons.Default.Refresh, contentDescription = "", tint = Color.White)
             }
         }
-        Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-            contentDescription = "",
-            contentScale = ContentScale.FillHeight,
-            modifier = Modifier
-                .height((110 * scale).dp)
-                .padding(end = 32.dp)
-                .align(Alignment.BottomEnd)
-        )
-    }
+    )
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-fun LocalMovieCard(movie: Movie){
-    var currentState: TouchState by remember{ mutableStateOf(TouchState.NotTouched)}
-
-    var transition = updateTransition(targetState = currentState, label = "animation")
-
-    val scale: Float by transition.animateFloat(
-        transitionSpec = { spring(stiffness = 900f)}, label = ""
-    ) {state ->
-        if (state == TouchState.Touched){
-            1.3f
-        }else{
-            1f
-        }
-    }
-
-    val colorAlpha: Float by transition.animateFloat(
-        transitionSpec = { spring(stiffness = 900f)}, label = ""
-    ) {state ->
-        if (state == TouchState.Touched){
-            1f
-        }else{
-            0.2f
-        }
-    }
-
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(270.dp),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Card(
-            Modifier
-                .fillMaxWidth()
-                .height(270.dp)
-                .pointerInteropFilter {
-                    currentState = when (it.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            TouchState.Touched
-                        }
-                        else -> {
-                            TouchState.NotTouched
-                        }
-                    }
-                    true
-                },
-            shape = RoundedCornerShape(topStart = 16.dp, bottomEnd = 16.dp, topEnd = 5.dp, bottomStart = 5.dp),
-            backgroundColor = Color.Red,
-            elevation = 6.dp
-        ) {
-            Row(modifier = Modifier
-                .matchParentSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Color.Red.copy(0.2f),
-                            Color.Red.copy(0.2f),
-                            Color.Red.copy(colorAlpha)
-                        )
-                    )
-                )) {
-
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "Id: ${movie.id}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Movie Name: ${movie.name}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "List Type: ${movie.list_type}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Language: ${movie.iso_639_1}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Favourite Count: ${movie.favorite_count.toString()}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-
-                    Text(
-                        text = "Item Count: ${movie.item_count.toString()}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Divider(modifier = Modifier
-                        .height(1.dp)
-                        .fillMaxWidth())
-                    Text(
-                        text = "Description: \n${movie.description}",
-                        letterSpacing = 1.sp,
-                        color = MaterialTheme.colors.onPrimary,
-                        style = TextStyle(fontSize = 15.sp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                }
-            }
-        }
-        Image(
-            painter = painterResource(id = R.drawable.ic_launcher_foreground),
-            contentDescription = "",
-            contentScale = ContentScale.FillHeight,
-            modifier = Modifier
-                .height((110 * scale).dp)
-                .padding(end = 32.dp)
-                .align(Alignment.BottomEnd)
-        )
-    }
-}

@@ -18,11 +18,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // handle the implementation of splashscreen
         installSplashScreen().apply {
-            setKeepOnScreenCondition{  movieViewModel.loading.value }
+            setKeepOnScreenCondition{
+                // monitor the loading variable to know when the splash screen disappear
+                movieViewModel.loading.value
+            }
         }
         setContent {
             MovieListTheme {
+                // calling the navigation function that handles the routes process
                 Navigation(movieViewModel)
             }
         }

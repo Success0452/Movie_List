@@ -33,6 +33,11 @@ Retriving List of Movies from Movie Database API Implemented with Kotlin, Jetpac
 
 `Access List Offline` Enables users to get view loaded list without internet.
 
+## End Point
+
+`GET` `https://api.themoviedb.org/3/movie/{movie_id}/lists?api_key=<<api_key>>&language=en-US&page=1`.
+
+
 
 
 

@@ -21,15 +21,19 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// annotation specifically for viewmodel, to allow for constructor injection
 @HiltViewModel
+
 class MovieViewModel @Inject constructor(
     private  val service: ApiService,
     private val repository: RepositoryService
 ) : ViewModel() {
 
+    // this variable tracks when splashscreen finish loading
     private var _loading = MutableStateFlow(true)
     val loading = _loading.asStateFlow()
 
+    // this serves as the entry of the viewmodel and codes here get executed first
     init {
         viewModelScope.launch {
             delay(3000L)
@@ -37,16 +41,16 @@ class MovieViewModel @Inject constructor(
         }
     }
 
+    // this variable update the ui of the content inside the roomdb
     val roomdb = repository.getAll()
 
-    private val _movieList = MutableStateFlow<List<Results>>(emptyList())
-    val movieList = _movieList.asStateFlow()
-
+    // pager handle the flow of data into the ui
     val pager = Pager(
         config = PagingConfig(pageSize = 5, prefetchDistance = 5),
         pagingSourceFactory = { MoviePagingSource(service = service) }
     ).flow.cachedIn(viewModelScope)
 
+    // this function when called save data into the roomdb
     fun saveMovie(movie: Results){
         viewModelScope.launch {
             repository.saveMovie(
