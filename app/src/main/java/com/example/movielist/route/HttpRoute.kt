@@ -8,7 +8,7 @@ object HttpRoute {
     // concatenation of the baseUrl with the endpoint
     const val LIST_MOVIE = "$BASE_URL/12/lists"
     // api_key been assigned a variable
-    const val API_KEY = "5ef9d3ec9eee9711d0353cb8d66d22de"
+    const val API_KEY = "<<api key>>"
     // language been assigned a variable
     const val LANGUAGE = "en-US"
 }
