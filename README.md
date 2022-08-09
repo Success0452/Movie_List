@@ -11,9 +11,10 @@ Retriving List of Movies from Movie Database API Implemented with Kotlin, Jetpac
 - This task was carried out using kotlin and jetpack and other jetpack packages.
 
 ## How it works
-- The application needs to load the data from the server through the internet to serve user, the loading of the list is be controlled by using paging, 
-- the pagging loads the data bit by bit to save user loading uncessary contents, these data on been viewed, gets saved to. 
-- Roomdatabase, and this then enable the user to access these list without internet another time.
+- The application needs to load the data from the server through the internet to serve user.
+- Data on been viewed, gets saved to Roomdatabase, and this then enable the user to access these list without internet another time.
+- Loading of the list is be controlled by using pagingthe pagging loads the data bit by bit to save user loading uncessary contents. 
+- Application state is been handled by the viewModel
 
 ## Tech Stack
 
