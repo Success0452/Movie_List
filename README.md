@@ -37,6 +37,8 @@ Retriving List of Movies from Movie Database API Implemented with Kotlin, Jetpac
 
 `GET` `https://api.themoviedb.org/3/movie/{movie_id}/lists?api_key=<<api_key>>&language=en-US&page=1`.
 
+## APK
+`GET ACCESSTO THE APK OF THIS PROJECT IN THE RELEASE FILE` : `app folder -> release folder -> app-release.apk`
 
 
 
